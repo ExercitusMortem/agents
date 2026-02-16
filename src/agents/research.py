@@ -1,23 +1,25 @@
 """
-Research Agent - Finds cross-references and relevant case law.
+Research Agent - Finds cross-references and relevant case law using LLM.
 """
-from typing import Dict, Any, List
-import re
+from typing import Dict, Any, List, Optional
+import json
 from .base import BaseAgent, AgentResult
+from .llm_client import BaseLLMClient, create_llm_client
 
 
 class ResearchAgent(BaseAgent):
     """
-    Agent that identifies cross-references and finds relevant case law.
-    Links sections to related legal materials.
+    LLM-powered agent that identifies cross-references and finds relevant case law.
+    Uses AI to intelligently link sections to related legal materials.
     """
     
-    def __init__(self):
+    def __init__(self, llm_client: Optional[BaseLLMClient] = None):
         super().__init__("ResearchAgent")
+        self.llm_client = llm_client or create_llm_client()
     
     def process(self, input_data: Dict[str, Any]) -> AgentResult:
         """
-        Research cross-references and case law for annotated sections.
+        Research cross-references and case law for annotated sections using LLM.
         
         Expected input_data keys:
             - annotated_sections: List of annotated sections
@@ -33,21 +35,21 @@ class ResearchAgent(BaseAgent):
                     error="No annotated sections provided for research"
                 )
             
-            # Research each section
+            # Research each section using LLM
             researched_sections = []
             all_cross_refs = []
             all_cases = []
             
             for section in sections:
-                research = self._research_section(section)
+                research = self._research_section_with_llm(section)
                 researched_section = {
                     **section,
                     "research": research
                 }
                 researched_sections.append(researched_section)
                 
-                all_cross_refs.extend(research["cross_references"])
-                all_cases.extend(research["case_law"])
+                all_cross_refs.extend(research.get("cross_references", []))
+                all_cases.extend(research.get("case_law", []))
             
             research_data = {
                 "researched_sections": researched_sections,
@@ -70,92 +72,68 @@ class ResearchAgent(BaseAgent):
                 error=f"Error in research: {str(e)}"
             )
     
-    def _research_section(self, section: Dict[str, Any]) -> Dict[str, Any]:
-        """Research a single section for cross-references and case law."""
+    def _research_section_with_llm(self, section: Dict[str, Any]) -> Dict[str, Any]:
+        """Research a single section using LLM."""
         content = section.get("content", "")
         section_id = section.get("id", "")
         
-        return {
-            "cross_references": self._find_cross_references(content, section_id),
-            "case_law": self._find_case_citations(content, section_id),
-            "related_topics": self._identify_related_topics(content)
-        }
-    
-    def _find_cross_references(self, text: str, section_id: str) -> List[Dict[str, str]]:
-        """Find references to other sections or statutes."""
-        cross_refs = []
-        seen_refs = set()  # Avoid duplicates
+        if not content or len(content.strip()) < 10:
+            return {
+                "cross_references": [],
+                "case_law": [],
+                "related_topics": []
+            }
         
-        # Patterns for cross-references
-        ref_patterns = [
-            (r'Section\s+([IVXivx\d]+)', 'Section'),
-            (r'§\s*([IVXivx\d]+)', 'Section'),
-            (r'Article\s+([IVXivx\d]+)', 'Article'),
-            (r'(\d+)\s+U\.?\s?S\.?\s?C\.?\s+§?\s*(\d+)', 'USC'),  # US Code
-            (r'(\d+)\s+C\.?\s?F\.?\s?R\.?\s+§?\s*(\d+)', 'CFR'),  # Code of Federal Regulations
-        ]
-        
-        for pattern, ref_type in ref_patterns:
-            matches = re.finditer(pattern, text, re.IGNORECASE)
-            for match in matches:
-                ref_text = match.group(0).strip()
-                # Avoid duplicates
-                if ref_text.lower() not in seen_refs:
-                    seen_refs.add(ref_text.lower())
-                    cross_refs.append({
-                        "section_id": section_id,
-                        "reference": ref_text,
-                        "type": ref_type
-                    })
-        
-        return cross_refs
-    
-    def _find_case_citations(self, text: str, section_id: str) -> List[Dict[str, str]]:
-        """Find legal case citations."""
-        cases = []
-        seen_cases = set()  # Avoid duplicates
-        
-        # Pattern for case names: "Smith v. Jones"
-        case_name_pattern = r'\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\s+v\.?\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)'
-        
-        matches = re.finditer(case_name_pattern, text)
-        for match in matches:
-            case_text = match.group(0).strip()
-            # Look ahead for full citation (e.g., "123 F.3d 456")
-            remainder = text[match.end():match.end()+100]
-            citation_pattern = r'\s*,?\s*(\d+\s+[A-Z][a-zA-Z.]*\s+\d+)'
-            citation_match = re.match(citation_pattern, remainder)
+        system_prompt = """You are a legal research expert. Analyze the provided section and identify:
+
+1. CROSS-REFERENCES - References to other sections or statutes
+   - Internal references (Section X, Article Y)
+   - External statutory references (U.S.C. §, C.F.R. §)
+   - Other legal code references
+
+2. CASE LAW - Legal case citations
+   - Case names (Party v. Party)
+   - Full citations with reporters (e.g., 123 F.3d 456)
+   - Assess relevance if possible
+
+3. RELATED TOPICS - Legal topics and practice areas
+   - Contract law, tort law, criminal law, etc.
+   - Specific legal concepts mentioned
+
+Respond in JSON format:
+{
+    "cross_references": [
+        {"reference": "citation text", "type": "internal|external|statutory", "section_id": "section id"}
+    ],
+    "case_law": [
+        {"citation": "case citation", "relevance": "high|medium|low", "section_id": "section id"}
+    ],
+    "related_topics": ["topic1", "topic2"]
+}"""
+
+        user_message = f"""Analyze this legal section for references and case law:
+
+Section ID: {section_id}
+Section Title: {section.get('title', 'Untitled')}
+
+Content:
+{content}"""
+
+        try:
+            response = self.llm_client.chat(system_prompt, user_message)
+            research = json.loads(response.content)
             
-            if citation_match:
-                full_citation = case_text + citation_match.group(0).strip()
-            else:
-                full_citation = case_text
+            # Ensure section_id is set for all items
+            for ref in research.get("cross_references", []):
+                ref["section_id"] = section_id
+            for case in research.get("case_law", []):
+                case["section_id"] = section_id
             
-            # Avoid duplicates
-            if full_citation.lower() not in seen_cases:
-                seen_cases.add(full_citation.lower())
-                cases.append({
-                    "section_id": section_id,
-                    "citation": full_citation,
-                    "type": "case_law"
-                })
-        
-        return cases
-    
-    def _identify_related_topics(self, text: str) -> List[str]:
-        """Identify related legal topics and keywords."""
-        topics = []
-        
-        # Common legal topic keywords
-        topic_keywords = [
-            "contract", "tort", "criminal", "civil", "constitutional",
-            "property", "liability", "negligence", "damages", "jurisdiction",
-            "procedure", "evidence", "appeal", "compliance", "enforcement"
-        ]
-        
-        text_lower = text.lower()
-        for keyword in topic_keywords:
-            if keyword in text_lower:
-                topics.append(keyword.title())
-        
-        return list(set(topics))  # Remove duplicates
+            return research
+        except (json.JSONDecodeError, Exception):
+            # Fallback to empty research if LLM fails
+            return {
+                "cross_references": [],
+                "case_law": [],
+                "related_topics": []
+            }

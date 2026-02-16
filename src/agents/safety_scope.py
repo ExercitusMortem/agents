@@ -1,22 +1,25 @@
 """
-Safety and Scope Agent - Validates jurisdiction and legal context.
+Safety and Scope Agent - Validates jurisdiction and legal context using LLM.
 """
-from typing import Dict, Any
+from typing import Dict, Any, Optional
+import json
 from .base import BaseAgent, AgentResult
+from .llm_client import BaseLLMClient, create_llm_client
 
 
 class SafetyScopeAgent(BaseAgent):
     """
-    Agent that validates jurisdiction and legal context before processing.
-    Ensures the input is appropriate for legal analysis.
+    LLM-powered agent that validates jurisdiction and legal context before processing.
+    Uses AI to understand and classify legal documents intelligently.
     """
     
-    def __init__(self):
+    def __init__(self, llm_client: Optional[BaseLLMClient] = None):
         super().__init__("SafetyScopeAgent")
+        self.llm_client = llm_client or create_llm_client()
     
     def process(self, input_data: Dict[str, Any]) -> AgentResult:
         """
-        Validate the legal document for jurisdiction and context.
+        Validate the legal document for jurisdiction and context using LLM.
         
         Expected input_data keys:
             - text: The raw legal text to analyze
@@ -34,29 +37,74 @@ class SafetyScopeAgent(BaseAgent):
                     error="No text provided for analysis"
                 )
             
-            # Analyze the document for safety and scope
-            validation_results = {
-                "is_legal_document": True,
-                "contains_personal_info": self._check_personal_info(text),
-                "jurisdiction_identified": self._identify_jurisdiction(text, input_data.get("jurisdiction")),
-                "document_type": self._identify_document_type(text, input_data.get("document_type")),
-                "word_count": len(text.split()),
-                "ready_for_processing": True
-            }
+            # Basic length check
+            if len(text.split()) < 10:
+                return self._create_result(
+                    success=False,
+                    error="Document too short for meaningful analysis"
+                )
             
-            # Check if document is ready for processing
-            if validation_results["word_count"] < 10:
-                validation_results["ready_for_processing"] = False
+            # Use LLM to analyze the document
+            system_prompt = """You are a legal document validation expert. Analyze the provided text and determine:
+1. Whether it is a legal document
+2. The jurisdiction (Federal, State, International, etc.)
+3. The document type (Statute, Regulation, Case Law, Contract, etc.)
+4. Whether it contains sensitive personal information
+5. Whether it is ready for detailed legal analysis
+
+Respond in JSON format with these fields:
+{
+    "is_legal_document": true/false,
+    "jurisdiction": "identified jurisdiction",
+    "document_type": "type of document",
+    "contains_sensitive_info": true/false,
+    "ready_for_processing": true/false,
+    "confidence": "high/medium/low",
+    "reasoning": "brief explanation"
+}"""
+
+            user_message = f"""Analyze this document:
+
+Provided context:
+- Jurisdiction hint: {input_data.get('jurisdiction', 'Not specified')}
+- Document type hint: {input_data.get('document_type', 'Not specified')}
+
+Document text:
+{text[:2000]}{'...' if len(text) > 2000 else ''}"""
+
+            response = self.llm_client.chat(system_prompt, user_message)
+            
+            # Parse LLM response
+            try:
+                validation_results = json.loads(response.content)
+            except json.JSONDecodeError:
+                # Fallback if LLM doesn't return valid JSON
+                validation_results = {
+                    "is_legal_document": True,
+                    "jurisdiction": input_data.get("jurisdiction", "Unknown"),
+                    "document_type": input_data.get("document_type", "Legal Document"),
+                    "contains_sensitive_info": False,
+                    "ready_for_processing": True,
+                    "confidence": "low",
+                    "reasoning": "LLM response parsing failed, using defaults"
+                }
+            
+            # Add basic stats
+            validation_results["word_count"] = len(text.split())
+            validation_results["jurisdiction_identified"] = validation_results.get("jurisdiction", "Unknown")
+            
+            # Check if ready for processing
+            if not validation_results.get("ready_for_processing", True):
                 return self._create_result(
                     success=False,
                     data=validation_results,
-                    error="Document too short for meaningful analysis"
+                    error=validation_results.get("reasoning", "Document not ready for processing")
                 )
             
             return self._create_result(
                 success=True,
                 data=validation_results,
-                metadata={"original_text": text}
+                metadata={"original_text": text, "llm_metadata": response.metadata}
             )
             
         except Exception as e:
@@ -64,40 +112,3 @@ class SafetyScopeAgent(BaseAgent):
                 success=False,
                 error=f"Error in safety and scope validation: {str(e)}"
             )
-    
-    def _check_personal_info(self, text: str) -> bool:
-        """Check if text contains potential personal information."""
-        # Simple heuristic - in real implementation would use NER
-        pii_indicators = ["SSN", "social security", "date of birth", "DOB"]
-        text_lower = text.lower()
-        return any(indicator.lower() in text_lower for indicator in pii_indicators)
-    
-    def _identify_jurisdiction(self, text: str, provided_jurisdiction: Any) -> str:
-        """Identify the legal jurisdiction from the text or use provided."""
-        if provided_jurisdiction:
-            return str(provided_jurisdiction)
-        
-        # Simple heuristic - look for jurisdiction indicators
-        text_lower = text.lower()
-        if "federal" in text_lower or "united states code" in text_lower:
-            return "Federal (US)"
-        elif "state of" in text_lower:
-            # Try to extract state name
-            return "State (Unspecified)"
-        else:
-            return "Unknown"
-    
-    def _identify_document_type(self, text: str, provided_type: Any) -> str:
-        """Identify the type of legal document."""
-        if provided_type:
-            return str(provided_type)
-        
-        text_lower = text.lower()
-        if "§" in text or "section" in text_lower:
-            return "Statute/Code"
-        elif "plaintiff" in text_lower or "defendant" in text_lower:
-            return "Case Law"
-        elif "ordinance" in text_lower:
-            return "Ordinance"
-        else:
-            return "General Legal Document"

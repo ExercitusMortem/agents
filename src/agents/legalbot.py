@@ -1,7 +1,7 @@
 """
 LegalBot - Orchestrator agent for legal document analysis.
 
-This agent manages a pipeline of specialized sub-agents to analyze 
+This agent manages a pipeline of specialized LLM-powered sub-agents to analyze 
 statutes, codes, and case law following a strict 5-step workflow.
 """
 from typing import Dict, Any, List, Optional
@@ -11,28 +11,38 @@ from .structuring import StructuringAgent
 from .annotation import AnnotationAgent
 from .research import ResearchAgent
 from .formatting import FormattingAgent
+from .llm_client import BaseLLMClient, create_llm_client
 
 
 class LegalBot:
     """
-    Orchestrator agent that manages the legal document analysis pipeline.
+    Orchestrator agent that manages the LLM-powered legal document analysis pipeline.
     
     Workflow:
-    1. Safety & Scope: Validates jurisdiction and legal context
-    2. Structuring: Breaks raw text into discrete articles/sections
-    3. Annotation: Identifies obligations, deadlines, and penalties
-    4. Research: Finds cross-references and relevant case law
-    5. Formatting: Compiles everything into a structured Markdown report
+    1. Safety & Scope: Validates jurisdiction and legal context using LLM
+    2. Structuring: Breaks raw text into discrete articles/sections using LLM
+    3. Annotation: Identifies obligations, deadlines, and penalties using LLM
+    4. Research: Finds cross-references and relevant case law using LLM
+    5. Formatting: Compiles everything into a structured Markdown report using LLM
     """
     
-    def __init__(self):
-        """Initialize LegalBot with all sub-agents."""
+    def __init__(self, llm_provider: Optional[str] = None):
+        """
+        Initialize LegalBot with LLM-powered sub-agents.
+        
+        Args:
+            llm_provider: LLM provider to use ('openai', 'mock', or None for env-based)
+        """
+        # Create shared LLM client
+        self.llm_client = create_llm_client(llm_provider)
+        
+        # Initialize all sub-agents with LLM client
         self.pipeline = [
-            SafetyScopeAgent(),
-            StructuringAgent(),
-            AnnotationAgent(),
-            ResearchAgent(),
-            FormattingAgent()
+            SafetyScopeAgent(self.llm_client),
+            StructuringAgent(self.llm_client),
+            AnnotationAgent(self.llm_client),
+            ResearchAgent(self.llm_client),
+            FormattingAgent(self.llm_client)
         ]
         self.results: List[AgentResult] = []
     
@@ -43,7 +53,7 @@ class LegalBot:
         document_type: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Analyze a legal document through the complete pipeline.
+        Analyze a legal document through the complete LLM-powered pipeline.
         
         Args:
             text: The raw legal text to analyze
@@ -143,7 +153,8 @@ class LegalBot:
                         "error": r.error
                     }
                     for r in self.results
-                ]
+                ],
+                "llm_provider": type(self.llm_client).__name__
             }
             
         except Exception as e:
@@ -172,7 +183,8 @@ class LegalBot:
                     "error": r.error
                 }
                 for r in self.results
-            ]
+            ],
+            "llm_provider": type(self.llm_client).__name__
         }
     
     def get_pipeline_status(self) -> List[Dict[str, Any]]:
