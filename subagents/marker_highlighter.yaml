@@ -1,0 +1,28 @@
+# Marker Highlighter Subagent
+# Identifies and highlights important legal elements in documents
+
+name: marker_highlighter
+version: "1.0.0"
+description: "Identifies and marks key legal elements such as clauses, definitions, and obligations"
+
+config:
+  highlight_types:
+    - definitions
+    - obligations
+    - rights
+    - deadlines
+    - parties
+    - references
+  
+  marker_styles:
+    critical: "red"
+    important: "yellow"
+    informational: "blue"
+
+capabilities:
+  - element_identification
+  - importance_classification
+  - visual_marking
+
+input_format: "application/json"
+output_format: "application/json"

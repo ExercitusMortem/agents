@@ -1,0 +1,33 @@
+# Output Formatter Subagent
+# Structures and formats output in professional legal formats
+
+name: output_formatter
+version: "1.0.0"
+description: "Formats analysis results into professional legal document formats"
+
+config:
+  output_formats:
+    - legal_memo
+    - brief
+    - opinion_letter
+    - summary_report
+  
+  style_guides:
+    - bluebook
+    - alwd
+    - chicago_manual
+
+  formatting_options:
+    include_toc: true
+    include_citations: true
+    include_appendices: true
+    page_numbering: true
+
+capabilities:
+  - format_conversion
+  - style_application
+  - document_structuring
+  - citation_formatting
+
+input_format: "application/json"
+output_format: "text/plain, text/html, application/pdf"
