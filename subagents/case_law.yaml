@@ -1,0 +1,26 @@
+# Case Law Subagent
+# Searches and analyzes relevant case law for legal documents
+
+name: case_law
+version: "1.0.0"
+description: "Searches, retrieves, and analyzes relevant case law"
+
+config:
+  databases:
+    - federal_cases
+    - state_cases
+    - international_cases
+  
+  search_parameters:
+    relevance_threshold: 0.7
+    max_results: 10
+    include_dissents: true
+
+capabilities:
+  - case_search
+  - precedent_analysis
+  - citation_formatting
+  - relevance_ranking
+
+input_format: "application/json"
+output_format: "application/json"

@@ -1,0 +1,26 @@
+# Cross Reference Subagent
+# Links related legal concepts, citations, and document sections
+
+name: cross_reference
+version: "1.0.0"
+description: "Creates connections between related legal concepts and citations"
+
+config:
+  reference_types:
+    - internal_sections
+    - external_documents
+    - case_citations
+    - statute_references
+  
+  link_strength:
+    strong: 0.8
+    moderate: 0.5
+    weak: 0.3
+
+capabilities:
+  - citation_linking
+  - concept_mapping
+  - reference_validation
+
+input_format: "application/json"
+output_format: "application/json"

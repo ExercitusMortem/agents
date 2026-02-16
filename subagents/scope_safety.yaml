@@ -1,0 +1,29 @@
+# Scope Safety Subagent
+# Ensures operations remain within defined legal and ethical boundaries
+
+name: scope_safety
+version: "1.0.0"
+description: "Validates that all operations stay within authorized scope and ethical boundaries"
+
+config:
+  safety_checks:
+    - unauthorized_practice_of_law
+    - confidentiality_breach
+    - conflict_of_interest
+    - jurisdiction_limits
+    - ethical_violations
+  
+  escalation_rules:
+    critical: "immediate_stop"
+    high: "require_approval"
+    medium: "flag_and_continue"
+    low: "log_only"
+
+capabilities:
+  - scope_validation
+  - ethical_checking
+  - risk_assessment
+  - compliance_monitoring
+
+input_format: "application/json"
+output_format: "application/json"

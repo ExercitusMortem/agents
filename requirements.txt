@@ -1,0 +1,33 @@
+# LegalBot Dependencies
+
+# YAML parsing
+PyYAML>=6.0.0
+
+# HTTP requests
+requests>=2.31.0
+
+# LLM SDKs (placeholder - choose based on your provider)
+# openai>=1.0.0
+# anthropic>=0.18.0
+# langchain>=0.1.0
+
+# Document processing
+# pypdf>=3.0.0
+# python-docx>=1.0.0
+
+# Text processing
+# nltk>=3.8.0
+# spacy>=3.7.0
+
+# Data handling
+# pandas>=2.0.0
+# numpy>=1.24.0
+
+# Environment management
+python-dotenv>=1.0.0
+
+# Logging and monitoring
+# loguru>=0.7.0
+
+# Configuration management
+# pydantic>=2.0.0

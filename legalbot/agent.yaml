@@ -1,0 +1,28 @@
+# LegalBot Main Agent Specification
+# This file defines the main LegalBot agent configuration
+
+name: legalbot
+version: "1.0.0"
+description: "Main LegalBot agent for legal document processing and analysis"
+
+# Agent configuration placeholder
+config:
+  model: "placeholder-model"
+  temperature: 0.7
+  max_tokens: 2000
+
+# Subagents placeholder
+subagents:
+  - text_splitter
+  - marker_highlighter
+  - cross_reference
+  - case_law
+  - output_formatter
+  - scope_safety
+
+# Capabilities placeholder
+capabilities:
+  - legal_document_analysis
+  - case_law_research
+  - cross_referencing
+  - document_formatting

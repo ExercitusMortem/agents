@@ -1,0 +1,20 @@
+# Text Splitter Subagent
+# Breaks down legal documents into manageable, semantically meaningful chunks
+
+name: text_splitter
+version: "1.0.0"
+description: "Splits legal documents into appropriate chunks for processing"
+
+config:
+  chunk_size: 1000
+  overlap: 200
+  preserve_structure: true
+  respect_sections: true
+
+capabilities:
+  - document_chunking
+  - section_preservation
+  - context_maintenance
+
+input_format: "text/plain, text/html, application/pdf"
+output_format: "application/json"
