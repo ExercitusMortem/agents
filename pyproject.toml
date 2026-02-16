@@ -1,0 +1,19 @@
+[project]
+name = "legalbot-agents"
+version = "0.1.0"
+description = "LegalBot orchestrator agent for analyzing statutes, codes, and case law"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_backend"
