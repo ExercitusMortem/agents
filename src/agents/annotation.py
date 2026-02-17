@@ -257,9 +257,31 @@ Identify and tag all relevant elements according to the schema. Be precise with 
         """
         validated = []
         
+<<<<<<< Updated upstream
         for ann in annotations:
             # Check required fields
             if not all(k in ann for k in ['category', 'subtype', 'text']):
+=======
+        # Patterns for obligations
+        obligation_patterns = [
+            (r'\bshall\b', 'mandatory'),
+            (r'\bmust\b', 'mandatory'),
+            (r'\bis required to\b', 'mandatory'),
+            (r'\bhas a duty to\b', 'mandatory'),
+            (r'\bis obligated to\b', 'mandatory'),
+            (r'\bmoet\b', 'mandatory'),
+            (r'\bdient\b', 'mandatory'),
+            (r'\bis verplicht(?:\s+te)?\b', 'mandatory'),
+            (r'\bmay\b', 'permissive'),
+            (r'\bis permitted to\b', 'permissive'),
+            (r'\bmag\b', 'permissive'),
+            (r'\bkan\b', 'permissive')
+        ]
+        
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if not sentence or len(sentence) < 5:
+>>>>>>> Stashed changes
                 continue
             
             # Validate category exists in schema
@@ -283,6 +305,7 @@ Identify and tag all relevant elements according to the schema. Be precise with 
         
         return validated
     
+<<<<<<< Updated upstream
     def get_annotations_by_category(self, annotations: List[Dict[str, Any]], 
                                    category: str) -> List[Dict[str, Any]]:
         """Filter annotations by category."""
@@ -293,3 +316,78 @@ Identify and tag all relevant elements according to the schema. Be precise with 
         """Filter annotations by category and subtype."""
         return [a for a in annotations 
                 if a['category'] == category and a['subtype'] == subtype]
+=======
+    def _identify_deadlines(self, text: str, section_id: str) -> List[Dict[str, str]]:
+        """Identify deadlines and time requirements."""
+        deadlines = []
+        
+        # Split into sentences
+        sentences = re.split(r'[.!?]+', text)
+        
+        # Patterns for deadlines
+        deadline_patterns = [
+            r'within\s+\d+\s+(?:day|week|month|year)s?',
+            r'not later than',
+            r'\d+\s+days?\s+(?:after|before)',
+            r'\d+\s+(?:day|week|month|year)s?\s+(?:of|after|before)',
+            r'binnen\s+\d+\s+(?:dag|dagen|week|weken|maand|maanden|jaar|jaren)',
+            r'uiterlijk\s+[^,.]+'
+        ]
+        
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if not sentence or len(sentence) < 5:
+                continue
+                
+            for pattern in deadline_patterns:
+                if re.search(pattern, sentence, re.IGNORECASE):
+                    deadlines.append({
+                        "section_id": section_id,
+                        "text": sentence.strip(),
+                        "type": "deadline"
+                    })
+                    break  # Only match once per sentence
+        
+        return deadlines
+    
+    def _identify_penalties(self, text: str, section_id: str) -> List[Dict[str, str]]:
+        """Identify penalties and consequences."""
+        penalties = []
+        
+        # Split into sentences
+        sentences = re.split(r'[.!?]+', text)
+        
+        # Patterns for penalties
+        penalty_patterns = [
+            r'fine of\s+\$?[\d,]+',
+            r'imprisonment',
+            r'penalty of',
+            r'subject to',
+            r'liable for',
+            r'shall be punished',
+            r'suspension',
+            r'revocation',
+            r'boete',
+            r'bestuurlijke\s+boete',
+            r'dwangsom',
+            r'gevangenisstraf',
+            r'hechtenis',
+            r'wordt\s+gestraft'
+        ]
+        
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if not sentence or len(sentence) < 5:
+                continue
+                
+            for pattern in penalty_patterns:
+                if re.search(pattern, sentence, re.IGNORECASE):
+                    penalties.append({
+                        "section_id": section_id,
+                        "text": sentence.strip(),
+                        "type": "penalty"
+                    })
+                    break  # Only match once per sentence
+        
+        return penalties
+>>>>>>> Stashed changes

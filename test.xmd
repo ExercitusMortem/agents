@@ -1,0 +1,72 @@
+[
+  {
+    "190-202:vaststellen": {
+      "<OBJ": [
+        "147-156:optreden <ATTR[137-147:wetgevend]",
+        "178-190:handelingen <ATTR[169-178:bindende] <ATTR[159-169:juridisch]"
+      ],
+      ">SUBJ": "132-137:unie <DET[129-132:de] <MOD[122-129:alleen]",
+      "<AUX": "118-122:kunnen",
+      "<PREPin": [
+        {
+          "6-15:gevallen": {
+            "<DET": "3-6:de",
+            ">PREPin": {
+              "106-117:toedelen": {
+                "<AUX": "100-106:worden",
+                ">SUBJ": "MEN",
+                "<PREPbij": {
+                  "29-39:Verdragen": {
+                    "<DET": "26-29:de",
+                    "<PREPop": {
+                      "54-61:gebied": {
+                        "<DET": "42-46:een",
+                        "<ATTR": "46-54:bepaald",
+                        "<PRED": {
+                          "76-88:bevoegdheid": {
+                            "<DET": "61-65:een",
+                            "<ATTR": "65-76:exclusieve",
+                            "<PREPaan": "95-100:unie <DET[92-95:de]"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "245-250:doen": {
+      ">SUBJ": "216-226:lidstaten <DET[213-216:de]",
+      "<AUX": "206-213:kunnen",
+      ">OBJ": "226-232:zulks <MOD[232-240:slechts] <MOD[240-245:zelf]",
+      "<OBJ": [
+        "254-258:zij",
+        {
+          "<PREPter": {
+            "302-313:uitvoering": {
+              "<PREPvan": {
+                "320-332:handelingen": {
+                  "<DET": "317-320:de",
+                  "<PREPvan": "339-344:unie <DET[336-339:de]"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "<MOD": "258-266:daartoe",
+      "<CONals": {
+        "279-290:machtigen": {
+          ">SUBJ": "274-279:unie <DET[271-274:de]",
+          "<AUX": "290-295:zijn"
+        }
+      }
+    }
+  }
+          ]
