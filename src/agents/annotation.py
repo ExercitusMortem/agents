@@ -185,6 +185,7 @@ Identify and tag all relevant elements according to the schema. Be precise with 
             },
             'DEADLINE': {
                 'ABSOLUTE': [
+                    r'\b(by|before|on or before|no later than)\s+\w+\s+\d{1,2}(st|nd|rd|th)?,?\s+\d{4}\b',
                     r'\b(by|before|on or before|no later than)\s+\d{1,2}(st|nd|rd|th)?\s+\w+\s+\d{4}\b',
                     r'\b\d{1,2}/\d{1,2}/\d{4}\b'
                 ],
